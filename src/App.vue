@@ -75,11 +75,33 @@
           </div>
         </div>
       </b-card>
+
+      <!-- Transform instructions -->
+      <b-card id="lifter-instructions-card" header="Transform" class="col-10 m-auto mt-2">
+        <p>Providing lifting instructions in the format used by <a target="_blank" href="https://github.com/AndyA/jsonpath-lifter#README">jsonpath-lifter</a>.</p>
+        <b-textarea rows=20 v-model="lifterInstructionsAsText"></b-textarea>
+      </b-card>
+
+      <b-card
+            v-show="transformError"
+            bg-variant="danger"
+            text-variant="white"
+            class="col-10 m-auto my-2"
+            header="Error reading transform instructions"
+        >
+          {{transformError}}
+        </b-card>
+
+      <!-- Output JSON -->
+      <b-card id="transformed-json" header="Transformed JSON" class="col-10 m-auto mt-2">
+        <b-form-textarea rows=20 readonly v-model="transformedJSONAsText"></b-form-textarea>
+      </b-card>
   </div>
 </template>
 
 <script>
 import jsonpath from 'jsonpath'
+import lifter from 'jsonpath-lifter'
 
 export default {
   name: 'App',
@@ -88,8 +110,19 @@ export default {
       inputData: {},
       inputURL: "./examples/gdc-head-and-mouth.json",
       loadError: undefined,
+      transformError: undefined,
       selectedColumnName: "",
       column_select: "all",
+      lifterInstructions: [{
+        src: '$[*].diagnoses[*]',
+        dst: '$',
+        mv: true,
+        via: [
+          { src: '$.diagnosis_id', dst: '$.id' },
+          { src: '$.age_at_diagnosis', dst: '$.age_at_diagnosis.valueDecimal' },
+          { dst: '$.age_at_diagnosis.unit', set: 'days' }
+        ]
+      }],
     }
   },
   computed: {
@@ -103,6 +136,19 @@ export default {
           this.loadError = undefined;
         } catch(err) {
           this.loadError = `Could not parse JSON: ${err}`;
+        }
+      }
+    },
+    lifterInstructionsAsText: {
+      get: function() {
+        return JSON.stringify(this.lifterInstructions, null ,2);
+      },
+      set: function (text) {
+        try {
+          this.lifterInstructions = JSON.parse(text);
+          this.transformError = undefined;
+        } catch(err) {
+          this.transformError = `Could not parse transform instructions: ${err}`;
         }
       }
     },
@@ -145,6 +191,14 @@ export default {
     },
     selectedColumnInfo: function() {
       return this.getColumnDescription(this.selectedColumnName);
+    },
+    transformedJSONAsText: function() {
+      try {
+        let transformedJSON = lifter(this.lifterInstructions)(this.inputData);
+        return JSON.stringify(transformedJSON, null, 2);
+      } catch(err) {
+        return `Could not transform data: ${err}`;
+      }
     }
   },
   methods: {
