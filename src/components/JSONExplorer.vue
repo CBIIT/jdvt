@@ -17,15 +17,19 @@
         <a target="_blank" href="https://www.npmjs.com/package/jsonpath">JSONPath</a> format used above.
       </p>
     </div>
-    <div class="col-3">
-      Selected rows
-      <b-textarea rows=10 readonly v-model="selectedColumnInfo"></b-textarea>
+    <div class="col-7">
+      <div v-if="getColumnValues(selectedColumnName).length === 0">
+        <p>No values present in column {{selectedColumnName}}.</p>
+      </div>
+      <b-table :items="getColumnValueCounts(selectedColumnName)" v-if="selectedColumnName" bordered striped>
+      </b-table>
     </div>
   </div>
 </template>
 
 <script>
 import jsonpath from "jsonpath";
+import uniq from 'lodash.uniq';
 
 export default {
   name: "JSONExplorer",
@@ -89,12 +93,34 @@ export default {
       return `${colName}: ${result || ''}`
     },
     getColumnValues: function(colName) {
+      if(!colName) return [];
+
       return jsonpath.query(this.inputData, colName)
           .filter(r => r !== null)
           .flatMap(v => {
             if (Array.isArray(v)) return v;
             return [v];
           });
+    },
+    getColumnValueCounts: function(colName) {
+      let result = this.getColumnValues(colName);
+      let uniqs = result.reduce((acc, val) => {
+        if (typeof(val) === 'object') {
+          val = JSON.stringify(val, undefined, 2);
+        }
+
+        acc[val] = acc[val] === undefined ? 1 : acc[val] += 1;
+        return acc;
+      }, {});
+      console.log(uniqs);
+      return Object.keys(uniqs).map(key => {
+        let row = {
+          value: key,
+          count: uniqs[key],
+        };
+
+        return row;
+      }).sort(v => v.count);
     }
   }
 }
