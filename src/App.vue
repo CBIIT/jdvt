@@ -49,8 +49,8 @@
         {{loadError}}
       </b-card>
 
-      <!-- Columns -->
-      <b-card id="columns" header="Columns" class="col-10 m-auto mt-2">
+      <!-- Fields -->
+      <b-card id="fields" header="Fields" class="col-10 m-auto mt-2">
         <JSONExplorer :input-data="inputData" />
       </b-card>
 

@@ -1,27 +1,27 @@
 <template>
   <div class="row">
     <div class="col-5">
-      <b-select class="m-auto col-12" v-model="column_select">
-        <b-select-option value="all">All columns</b-select-option>
-        <b-select-option value="no-blanks">Only non-blank columns</b-select-option>
+      <b-select class="m-auto col-12" v-model="field_select">
+        <b-select-option value="all">All fields</b-select-option>
+        <b-select-option value="no-blanks">Only non-blank fields</b-select-option>
       </b-select>
       <div class="overflow-auto">
         <b-select
             select-size=10
             class="m-auto col-12 overflow-scroll"
-            :options="filteredColumnNames" v-model="selectedColumnName">
+            :options="filteredFieldNames" v-model="selectedFieldName">
         </b-select>
       </div>
       <p>
-        {{filteredColumnNames.length}} columns displayed.
+        {{filteredFieldNames.length}} fields displayed.
         <a target="_blank" href="https://www.npmjs.com/package/jsonpath">JSONPath</a> format used above.
       </p>
     </div>
     <div class="col-7">
-      <div v-if="getColumnValues(selectedColumnName).length === 0">
-        <p>No values present in column {{selectedColumnName}}.</p>
+      <div v-if="getFieldValues(selectedFieldName).length === 0">
+        <p>No values present for field {{selectedFieldName}}.</p>
       </div>
-      <b-table :items="getColumnValueCounts(selectedColumnName)" v-if="selectedColumnName" bordered striped>
+      <b-table :items="getFieldValueCounts(selectedFieldName)" v-if="selectedFieldName" bordered striped>
       </b-table>
     </div>
   </div>
@@ -29,7 +29,6 @@
 
 <script>
 import jsonpath from "jsonpath";
-import uniq from 'lodash.uniq';
 
 export default {
   name: "JSONExplorer",
@@ -40,22 +39,22 @@ export default {
     }
   },
   data: function () { return {
-    selectedColumnName: "",
-    column_select: "all",
+    selectedFieldName: "",
+    field_select: "all",
   }},
   computed: {
-    columnNames: function () {
-      // We generate a name in the form '.{key}.{key}...' for every column in this file.
-      function get_column_names(prefix, dict) {
+    fieldNames: function () {
+      // We generate a name in the form '.{key}.{key}...' for every field in this file.
+      function get_field_names(prefix, dict) {
         if (Array.isArray(dict)) {
-          return [...new Set(dict.flatMap((row) => get_column_names(prefix + '[*]', row)))]
+          return [...new Set(dict.flatMap((row) => get_field_names(prefix + '[*]', row)))]
               .sort()
         } else if (dict instanceof Object) {
           const prefixed_names = [];
           Object.keys(dict).forEach(key => {
             let key_name = `${prefix}.${key}`;
             prefixed_names.push(key_name);
-            get_column_names(`${prefix}.${key}`, dict[key]).forEach(rowName => {
+            get_field_names(`${prefix}.${key}`, dict[key]).forEach(rowName => {
               prefixed_names.push(rowName);
             });
           });
@@ -66,33 +65,33 @@ export default {
         }
       }
 
-      return get_column_names('$', this.inputData);
+      return get_field_names('$', this.inputData);
     },
-    filteredColumnNames: function() {
-      let cols = this.columnNames;
+    filteredFieldNames: function() {
+      let cols = this.fieldNames;
 
-      if(this.column_select === 'all') {
+      if(this.field_select === 'all') {
         return cols;
-      } else if(this.column_select === 'no-blanks') {
+      } else if(this.field_select === 'no-blanks') {
         return cols.filter(colName => {
-          return new Set(this.getColumnValues(colName)).size > 0;
+          return new Set(this.getFieldValues(colName)).size > 0;
         })
       }
 
       return cols
     },
-    selectedColumnInfo: function() {
-      return this.getColumnDescription(this.selectedColumnName);
+    selectedFieldInfo: function() {
+      return this.getFieldDescription(this.selectedFieldName);
     },
   },
   methods: {
-    getColumnDescription: function(colName) {
+    getFieldDescription: function(colName) {
       if (colName === '') return '';
       console.log(colName);
-      let result = JSON.stringify([...new Set(this.getColumnValues(colName))], null, 2);
+      let result = JSON.stringify([...new Set(this.getFieldValues(colName))], null, 2);
       return `${colName}: ${result || ''}`
     },
-    getColumnValues: function(colName) {
+    getFieldValues: function(colName) {
       if(!colName) return [];
 
       return jsonpath.query(this.inputData, colName)
@@ -102,8 +101,8 @@ export default {
             return [v];
           });
     },
-    getColumnValueCounts: function(colName) {
-      let result = this.getColumnValues(colName);
+    getFieldValueCounts: function(colName) {
+      let result = this.getFieldValues(colName);
       let uniqs = result.reduce((acc, val) => {
         if (typeof(val) === 'object') {
           val = JSON.stringify(val, undefined, 2);
