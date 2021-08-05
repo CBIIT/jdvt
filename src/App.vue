@@ -78,7 +78,6 @@
 </template>
 
 <script>
-import jsonpath from 'jsonpath'
 import lifter from 'jsonpath-lifter'
 import JSONExplorer from "@/components/JSONExplorer";
 
