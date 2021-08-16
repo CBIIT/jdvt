@@ -74,11 +74,32 @@
       <b-card id="transformed-json" header="Transformed JSON" class="col-10 m-auto mt-2">
         <JSONExplorer :input-data="transformedJSON" />
       </b-card>
+
+      <!-- JSON Schema to validate -->
+      <b-card id="json-schema-card" header="JSON Schema" class="col-10 m-auto mt-2">
+        <p>Include a JSON Schema to be used to validate the transformed data.</p>
+        <b-textarea rows=20 v-model="jsonSchemaAsText"></b-textarea>
+      </b-card>
+
+      <b-card
+        v-show="jsonSchemaError"
+        bg-variant="danger"
+        text-variant="white"
+        class="col-10 m-auto my-2"
+        header="Error reading JSON Schema"
+      >
+        {{ jsonSchemaError }}
+      </b-card>
+
+      <b-card id="json-schema-validation-card" header="JSON Schema validation results" class="col-10 m-auto mt-2">
+        <b-textarea rows=20 v-model="jsonSchemaValidationResults" readonly></b-textarea>
+      </b-card>
   </div>
 </template>
 
 <script>
 import lifter from 'jsonpath-lifter'
+import Ajv from 'ajv'
 import JSONExplorer from "@/components/JSONExplorer";
 
 export default {
@@ -86,6 +107,9 @@ export default {
   components: {JSONExplorer},
   data: function () {
     return {
+      ajv: new Ajv({
+        allErrors: true
+      }),
       inputData: {},
       inputURL: "./examples/gdc-head-and-mouth.json",
       loadError: undefined,
@@ -96,10 +120,34 @@ export default {
         mv: true,
         via: [
           { src: '$.diagnosis_id', dst: '$.id' },
-          { src: '$.age_at_diagnosis', dst: '$.age_at_diagnosis.valueDecimal' },
+          { src: '$.age_at_diagnosis', dst: '$.age_at_diagnosis.valueDecimal', via: abc => parseInt(abc) },
           { dst: '$.age_at_diagnosis.unit', set: 'days' }
         ]
       }],
+      jsonSchemaError: undefined,
+      jsonSchema: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            id: {
+              'type': 'string'
+            },
+            age_at_diagnosis: {
+              'properties': {
+                'valueDecimal': {
+                  'type': 'number'
+                },
+                'unit': {
+                  'type': 'string',
+                  'enum': ['days']
+                }
+              },
+            },
+          },
+          requiredProperties: false
+        }
+      }
     }
   },
   computed: {
@@ -129,6 +177,20 @@ export default {
         }
       }
     },
+    jsonSchemaAsText: {
+      get: function() {
+        return JSON.stringify(this.jsonSchema, null ,2);
+      },
+      set: function (text) {
+        try {
+          this.jsonSchema = JSON.parse(text);
+          this.ajv.compile(this.jsonSchema);
+          this.jsonSchemaError = undefined;
+        } catch(err) {
+          this.jsonSchemaError = `Could not parse JSON Schema instructions: ${err}`;
+        }
+      }
+    },
     transformedJSON: function() {
       let lift = lifter(this.lifterInstructions);
       return lift(this.inputData);
@@ -140,6 +202,13 @@ export default {
       } catch(err) {
         return `Could not transform data: ${err}`;
       }
+    },
+    jsonSchemaValidationResults: function() {
+      let validator = this.ajv.compile(this.jsonSchema);
+      let valid = validator(this.transformedJSON);
+      if (valid) return "No validation errors reported.";
+      let errors_as_str = this.ajv.errorsText(validator.errors);
+      return `Validator errors: ${errors_as_str}`;
     }
   },
   methods: {
