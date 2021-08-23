@@ -33,6 +33,22 @@
               </b-row>
             </b-card-text>
           </b-tab>
+          <b-tab title="Import data from GDC">
+            <b-card-text>
+              <p>GDC queries use a <a
+                  target="_blank"
+                  href="https://docs.gdc.cancer.gov/API/Users_Guide/Search_and_Retrieval/"
+              >JSON-based query format</a>.</p>
+
+              <b-row class="mt-2">
+                <textarea rows="10" class="col-12 m-auto" v-model.lazy="gdcQueryAsData"></textarea>
+              </b-row>
+
+              <b-row class="mt-2">
+                <b-button variant="success"  v-on:click="gdcQueryExecute()">Query</b-button>
+              </b-row>
+            </b-card-text>
+          </b-tab>
           <b-tab title="Import data from CDA">
             <b-card-text>
               <p>We can use <a href="https://cda.cda-dev.broadinstitute.org/api/swagger-ui.html#/query/sqlQuery">the SQL query API request</a>.</p>
@@ -117,9 +133,9 @@ export default {
         dst: '$',
         mv: true,
         via: [
-          { src: '$.diagnosis_id', dst: '$.id' },
-          { src: '$.age_at_diagnosis', dst: '$.age_at_diagnosis.valueDecimal', via: abc => parseInt(abc) },
-          { dst: '$.age_at_diagnosis.unit', set: 'days' }
+          {src: '$.diagnosis_id', dst: '$.id'},
+          {src: '$.age_at_diagnosis', dst: '$.age_at_diagnosis.valueDecimal', via: abc => parseInt(abc)},
+          {dst: '$.age_at_diagnosis.unit', set: 'days'}
         ]
       }],
       jsonSchemaError: undefined,
@@ -145,8 +161,37 @@ export default {
           },
           requiredProperties: false
         }
-      }
-    }
+      },
+
+      gdcQuery: {
+        filters: {
+          op: "in",
+          content: {
+            field: "cases.primary_site",
+            value: [
+              "baseoftongue",
+              "floorofmouth",
+              "gum",
+              "hypopharynx",
+              "larynx",
+              "lip",
+              "nasalcavityandmiddleear",
+              "nasopharynx",
+              "oropharynx",
+              "otherandill-definedsitesinlip,oralcavityandpharynx",
+              "otherandunspecifiedmajorsalivaryglands",
+              "otherandunspecifiedpartsofmouth",
+              "otherandunspecifiedpartsoftongue",
+              "palate",
+              "tonsil",
+            ]
+          },
+        },
+        expand: "diagnoses,samples",
+        format: "JSON",
+        size: 200,
+      },
+    };
   },
   computed: {
     inputDataAsText: {
@@ -207,6 +252,13 @@ export default {
       if (valid) return "No validation errors reported.";
       let errors_as_str = this.ajv.errorsText(validator.errors).replaceAll(', ', '\n - ');
       return `Validator errors:\n - ${errors_as_str}`;
+    },
+
+    gdcQueryAsData: {
+      get() { return JSON.stringify(this.gdcQuery, undefined, 2); },
+      set(str) {
+        this.gdcQuery = JSON.parse(str);
+      }
     }
   },
   methods: {
@@ -216,6 +268,15 @@ export default {
         this.inputData = JSON.parse(response.bodyText)
       }, response => {
         this.loadError = `Could not load JSON from url ${url}: ${response.statusText}`;
+      });
+    },
+    gdcQueryExecute() {
+      this.$http.get('https://api.gdc.cancer.gov/cases', {
+        params: this.gdcQuery,
+      }).then(response => {
+        this.inputData = JSON.parse(response.bodyText);
+      }, response => {
+        this.loadError = `Could not load JSON from GDC: ${response.statusText}`;
       });
     }
   }
