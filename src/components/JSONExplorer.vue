@@ -1,30 +1,43 @@
 <template>
-  <div class="row">
-    <div class="col-5">
-      <b-select class="m-auto col-12" v-model="field_select">
-        <b-select-option value="all">All fields</b-select-option>
-        <b-select-option value="no-blanks">Only non-blank fields</b-select-option>
-      </b-select>
-      <div class="overflow-auto">
-        <b-select
-            select-size=10
-            class="m-auto col-12 overflow-scroll"
-            :options="filteredFieldNames" v-model="selectedFieldName">
-        </b-select>
-      </div>
-      <p>
-        {{filteredFieldNames.length}} fields displayed.
-        <a target="_blank" href="https://www.npmjs.com/package/jsonpath">JSONPath</a> format used above.
-      </p>
-    </div>
-    <div class="col-7">
-      <div v-if="getFieldValues(selectedFieldName).length === 0">
-        <p>No values present for field {{selectedFieldName}}.</p>
-      </div>
-      <b-table :items="getFieldValueCounts(selectedFieldName)" v-if="selectedFieldName" bordered striped>
-      </b-table>
-    </div>
-  </div>
+  <b-card body-class="text-center"
+          class="col-10 m-auto mt-2"
+          no-body>
+    <b-tabs card>
+      <b-tab :title="'Display ' + dataName + ' as fields'" active>
+        <div class="row">
+          <div class="col-5">
+            <b-select class="m-auto col-12" v-model="field_select">
+              <b-select-option value="all">All fields</b-select-option>
+              <b-select-option value="no-blanks">Only non-blank fields</b-select-option>
+            </b-select>
+            <div class="overflow-auto">
+              <b-select
+                  select-size=10
+                  class="m-auto col-12 overflow-scroll"
+                  :options="filteredFieldNames" v-model="selectedFieldName">
+              </b-select>
+            </div>
+            <p>
+              {{filteredFieldNames.length}} fields displayed.
+              <a target="_blank" href="https://www.npmjs.com/package/jsonpath">JSONPath</a> format used above.
+            </p>
+          </div>
+          <div class="col-7">
+            <div v-if="getFieldValues(selectedFieldName).length === 0">
+              <p>No values present for field {{selectedFieldName}}.</p>
+            </div>
+            <b-table :items="getFieldValueCounts(selectedFieldName)" v-if="selectedFieldName" bordered striped>
+            </b-table>
+          </div>
+        </div>
+      </b-tab>
+      <b-tab :title="'Display ' + dataName + ' as JSON'">
+        <b-textarea rows=20 v-model="dataAsText"></b-textarea>
+      </b-tab>
+      <b-tab :title="'Display ' + dataName + ' as RDF'">
+      </b-tab>
+    </b-tabs>
+  </b-card>
 </template>
 
 <script>
@@ -33,9 +46,13 @@ import jsonpath from "jsonpath";
 export default {
   name: "JSONExplorer",
   props: {
-    inputData: {
+    data: {
       type: Object,
       required: true
+    },
+    dataName: {
+      type: String,
+      default: "data"
     }
   },
   data: function () { return {
@@ -65,8 +82,9 @@ export default {
         }
       }
 
-      return get_field_names('$', this.inputData);
+      return get_field_names('$', this.data);
     },
+
     filteredFieldNames: function() {
       let cols = this.fieldNames;
 
@@ -80,21 +98,14 @@ export default {
 
       return cols
     },
-    selectedFieldInfo: function() {
-      return this.getFieldDescription(this.selectedFieldName);
-    },
+
+    dataAsText() { return JSON.stringify(this.data, null, 2); },
   },
   methods: {
-    getFieldDescription: function(colName) {
-      if (colName === '') return '';
-      console.log(colName);
-      let result = JSON.stringify([...new Set(this.getFieldValues(colName))], null, 2);
-      return `${colName}: ${result || ''}`
-    },
     getFieldValues: function(colName) {
       if(!colName) return [];
 
-      return jsonpath.query(this.inputData, colName)
+      return jsonpath.query(this.data, colName)
           .filter(r => r !== null)
           .flatMap(v => {
             if (Array.isArray(v)) return v;

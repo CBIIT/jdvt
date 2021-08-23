@@ -2,6 +2,8 @@
   <div id="app">
     <h1>JSON Data Visualization and Transformation Tool (JDVT)</h1>
 
+    <p></p>
+
       <b-card body-class="text-center" header-tag="nav" class="col-10 m-auto" no-body>
         <b-tabs card>
           <b-tab title="Load JSON from URL" active>
@@ -49,10 +51,8 @@
         {{loadError}}
       </b-card>
 
-      <!-- Fields -->
-      <b-card id="fields" header="Fields" class="col-10 m-auto mt-2">
-        <JSONExplorer :input-data="inputData" />
-      </b-card>
+      <!-- Input data -->
+      <JSONExplorer data-name="input data" :data="inputData" />
 
       <!-- Transform instructions -->
       <b-card id="lifter-instructions-card" header="Transform" class="col-10 m-auto mt-2">
@@ -71,9 +71,7 @@
         </b-card>
 
       <!-- Output JSON -->
-      <b-card id="transformed-json" header="Transformed JSON" class="col-10 m-auto mt-2">
-        <JSONExplorer :input-data="transformedJSON" />
-      </b-card>
+      <JSONExplorer data-name="transformed data" :data="transformedJSON" />
 
       <!-- JSON Schema to validate -->
       <b-card id="json-schema-card" header="JSON Schema" class="col-10 m-auto mt-2">
