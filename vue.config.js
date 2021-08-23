@@ -1,5 +1,6 @@
 module.exports = {
   publicPath: '/jdvt/',
+  outputDir: 'docs',
   pages: {
     index: {
       // entry for the page
