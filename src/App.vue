@@ -49,11 +49,6 @@
               </b-row>
             </b-card-text>
           </b-tab>
-          <b-tab title="Import data from CDA">
-            <b-card-text>
-              <p>We can use <a href="https://cda.cda-dev.broadinstitute.org/api/swagger-ui.html#/query/sqlQuery">the SQL query API request</a>.</p>
-            </b-card-text>
-          </b-tab>
         </b-tabs>
       </b-card>
 
