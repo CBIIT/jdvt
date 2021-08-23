@@ -205,8 +205,8 @@ export default {
       let validator = this.ajv.compile(this.jsonSchema);
       let valid = validator(this.transformedJSON);
       if (valid) return "No validation errors reported.";
-      let errors_as_str = this.ajv.errorsText(validator.errors);
-      return `Validator errors: ${errors_as_str}`;
+      let errors_as_str = this.ajv.errorsText(validator.errors).replaceAll(', ', '\n - ');
+      return `Validator errors:\n - ${errors_as_str}`;
     }
   },
   methods: {

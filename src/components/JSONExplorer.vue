@@ -3,7 +3,10 @@
           class="col-10 m-auto mt-2"
           no-body>
     <b-tabs card>
-      <b-tab :title="'Display ' + dataName + ' as fields'" active>
+      <b-tab :title="'Display ' + dataName + ' as JSON'" active>
+        <b-textarea rows=20 v-model="dataAsText"></b-textarea>
+      </b-tab>
+      <b-tab :title="'Display ' + dataName + ' as fields'">
         <div class="row">
           <div class="col-5">
             <b-select class="m-auto col-12" v-model="field_select">
@@ -23,6 +26,9 @@
             </p>
           </div>
           <div class="col-7">
+            <div v-if="!selectedFieldName">
+              <p>Select a field for more information.</p>
+            </div>
             <div v-if="getFieldValues(selectedFieldName).length === 0">
               <p>No values present for field {{selectedFieldName}}.</p>
             </div>
@@ -30,9 +36,6 @@
             </b-table>
           </div>
         </div>
-      </b-tab>
-      <b-tab :title="'Display ' + dataName + ' as JSON'">
-        <b-textarea rows=20 v-model="dataAsText"></b-textarea>
       </b-tab>
       <b-tab :title="'Display ' + dataName + ' as RDF'">
       </b-tab>
