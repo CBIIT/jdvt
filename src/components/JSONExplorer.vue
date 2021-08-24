@@ -29,9 +29,10 @@
             <div v-if="!selectedFieldName">
               <p>Select a field for more information.</p>
             </div>
-            <div v-if="getFieldValues(selectedFieldName).length === 0">
+            <div v-else-if="getFieldValues(selectedFieldName).length === 0">
               <p>No values present for field {{selectedFieldName}}.</p>
             </div>
+            <p v-if="recordCount > 0">The input contains {{recordCount}} top-level records.</p>
             <b-table :items="getFieldValueCounts(selectedFieldName)" v-if="selectedFieldName" bordered striped>
             </b-table>
           </div>
@@ -100,6 +101,13 @@ export default {
       }
 
       return cols
+    },
+
+    recordCount() {
+      if (Array.isArray(this.data)) {
+        return this.data.length;
+      }
+      return undefined;
     },
 
     dataAsText() { return JSON.stringify(this.data, null, 2); },

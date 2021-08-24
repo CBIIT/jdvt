@@ -8,7 +8,6 @@
         <b-tabs card>
           <b-tab title="Load JSON from URL" active>
             <b-card-text>
-              <b-form inline>
                 <b-input-group prepend="Load JSON from URL" class="mt-3">
                   <b-form-input
                     type="url"
@@ -16,12 +15,11 @@
                   ></b-form-input>
                   <b-input-group-append>
                     <b-button
-                        variant="outline-success"
+                        variant="success"
                         @click="loadFromURL(inputURL)"
                     >Load</b-button>
                   </b-input-group-append>
                 </b-input-group>
-              </b-form>
             </b-card-text>
           </b-tab>
           <b-tab title="Paste JSON">
@@ -45,7 +43,7 @@
               </b-row>
 
               <b-row class="mt-2">
-                <b-button variant="success"  v-on:click="gdcQueryExecute()">Query</b-button>
+                <b-button variant="success"  @click="gdcQueryExecute()">Query</b-button>
               </b-row>
             </b-card-text>
           </b-tab>
